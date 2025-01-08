@@ -16,7 +16,7 @@ jobs:
         uses: ./.github/actions/download-npm-package-build
         with:
           package-name: '@artandrey/api-client'
-          output-dir: 'extracted'
+          output-dir: './extracted'
           registry-url: 'https://npm.pkg.github.com'
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Debug - List Downloaded Files
