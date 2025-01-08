@@ -43,12 +43,10 @@ runs:
         echo "Fetching package metadata from: $PACKAGE_URL"
         
         # Get package metadata with npm registry headers
-        RESPONSE=$(curl -v \
+        RESPONSE=$(curl -s \
           -H "Accept: application/vnd.npm.install-v1+json" \
           -H "Authorization: Bearer ${{ inputs.token }}" \
           "$PACKAGE_URL")
-        echo "Response from registry:"
-        echo "$RESPONSE" | jq '.'
         
         # Get the version-specific data
         if [ "${{ inputs.version }}" = "latest" ]; then
@@ -69,7 +67,7 @@ runs:
         echo "Downloading from: $TARBALL_URL"
         
         # Download and extract the tarball
-        curl -v -L -H "Authorization: Bearer ${{ inputs.token }}" "$TARBALL_URL" -o "$TEMP_DIR/package.tgz"
+        curl -sL -H "Authorization: Bearer ${{ inputs.token }}" "$TARBALL_URL" -o "$TEMP_DIR/package.tgz"
         
         # Verify download
         if [ ! -f "$TEMP_DIR/package.tgz" ]; then
@@ -79,10 +77,7 @@ runs:
         
         cd "$TEMP_DIR"
         echo "Extracting package..."
-        tar -xzvf package.tgz
-        
-        echo "Extracted contents:"
-        ls -la
+        tar -xzf package.tgz
         
         # Create output directory and move package
         echo "Moving package to output directory..."
@@ -93,8 +88,7 @@ runs:
         cd "${{ github.workspace }}"
         rm -rf "$TEMP_DIR"
         
-        echo "Final package contents:"
-        ls -la "${{ inputs.output-dir }}"
+        echo "Package version $VERSION successfully downloaded to ${{ inputs.output-dir }}"
         
         # Set output version for reference
         echo "version=$VERSION" >> $GITHUB_OUTPUT 
