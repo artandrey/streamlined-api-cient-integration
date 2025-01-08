@@ -84,9 +84,10 @@ runs:
         echo "Extracted contents:"
         ls -la
         
-        # Move the package directory to the target location
+        # Create output directory and move package
         echo "Moving package to output directory..."
-        mv package "${{ inputs.output-dir }}"
+        mkdir -p "${{ inputs.output-dir }}"
+        mv package/* "${{ inputs.output-dir }}/"
         
         # Clean up temp directory
         cd ..
