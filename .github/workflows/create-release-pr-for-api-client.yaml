@@ -19,12 +19,6 @@ jobs:
           output-dir: './extracted'
           registry-url: 'https://npm.pkg.github.com'
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Debug - List Downloaded Files
-        run: |
-          echo "=== Contents of extracted directory ==="
-          ls -la ./extracted
-          echo "=== Tree of extracted directory ==="
-          tree ./extracted
       - name: Build API Client
         uses: ./.github/actions/build-api-client
       - name: Create Changeset
