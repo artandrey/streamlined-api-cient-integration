@@ -1,0 +1,58 @@
+name: 'Download Release Artifact'
+description: 'Downloads artifact from the latest GitHub release'
+
+inputs:
+  pattern:
+    description: 'Pattern to match the artifact'
+    required: true
+  download-path:
+    description: 'Path where to download the artifact'
+    required: true
+    default: './downloads'
+  extract-path:
+    description: 'Path where to extract the artifact'
+    required: true
+    default: './extracted'
+  token:
+    description: 'GitHub token'
+    required: true
+    default: ${{ github.token }}
+  repository:
+    description: 'Repository to download from (format: owner/repo)'
+    required: false
+    default: ${{ github.repository }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Create directories
+      shell: bash
+      run: |
+        mkdir -p "${{ inputs.download-path }}"
+        mkdir -p "${{ inputs.extract-path }}"
+
+    - name: Get and Download Latest Release Asset
+      shell: bash
+      run: |
+        cd "${{ inputs.download-path }}"
+        # Get latest release info and download matching assets
+        LATEST_RELEASE=$(gh api repos/${{ inputs.repository }}/releases/latest)
+        DOWNLOAD_URL=$(echo "$LATEST_RELEASE" | jq -r '.assets[] | select(.name | test("${{ inputs.pattern }}")) | .browser_download_url')
+        
+        if [ -z "$DOWNLOAD_URL" ]; then
+          echo "No matching assets found in the latest release"
+          exit 1
+        fi
+        
+        gh release download --repo ${{ inputs.repository }} --pattern "${{ inputs.pattern }}" latest
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+
+    - name: Extract Archive
+      shell: bash
+      run: |
+        cd "${{ inputs.download-path }}"
+        for f in *.tgz; do
+          [ -f "$f" ] || continue  # Skip if no files match
+          tar -xzf "$f" -C "${{ inputs.extract-path }}"
+        done
