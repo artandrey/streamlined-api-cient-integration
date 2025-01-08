@@ -57,12 +57,12 @@ runs:
       run: |
         cd "${{ inputs.download-path }}"
         echo "=== Extracting files ==="
-        for f in *.tgz; do
+        for f in *.zip; do
           if [ -f "$f" ]; then
             echo "Extracting $f to ${{ inputs.extract-path }}"
-            tar -xzf "$f" -C "${{ inputs.extract-path }}"
+            unzip -o "$f" -d "${{ inputs.extract-path }}"
           else
-            echo "No .tgz files found to extract"
+            echo "No .zip files found to extract"
           fi
         done
         
