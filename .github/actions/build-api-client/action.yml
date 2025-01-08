@@ -1,0 +1,22 @@
+name: 'Build API Client'
+description: 'Sets up the environment and builds the API client'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup
+      uses: ./../setup
+      with:
+        workspaces: '["api-client", "backend"]'
+    
+    - name: Write API File
+      shell: bash
+      run: pnpm run --filter backend api:write-file
+    
+    - name: Move API File
+      shell: bash
+      run: cp -f backend/api.json api-client/api.json
+    
+    - name: Build API Client
+      shell: bash
+      run: pnpm run --filter api-client build 
