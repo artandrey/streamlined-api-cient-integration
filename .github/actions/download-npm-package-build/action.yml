@@ -93,6 +93,9 @@ runs:
         cd ..
         rm -rf "$TEMP_DIR"
         
+        echo "File structure:"
+        ls
+
         echo "Final package contents:"
         ls -la "${{ inputs.output-dir }}"
         
