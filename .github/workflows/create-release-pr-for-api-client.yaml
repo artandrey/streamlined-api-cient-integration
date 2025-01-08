@@ -15,7 +15,7 @@ jobs:
       - name: Download API Client Package
         uses: ./.github/actions/download-npm-package-build
         with:
-          package-name: '@artandrey/api-client'
+          package-name: '@artandrey/api-client1'
           output-dir: './extracted'
           registry-url: 'https://npm.pkg.github.com'
           token: ${{ secrets.GITHUB_TOKEN }}
