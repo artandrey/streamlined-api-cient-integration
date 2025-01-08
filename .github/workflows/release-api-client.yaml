@@ -24,7 +24,15 @@ jobs:
       - name: Build API Client
         run: pnpm run --filter api-client build
       - name: Create Changeset
-        run: pnpm changeset add --package api-client --message "Api client release" --type minor
+        id: changeset
+        run: |
+          cat << 'EOF' > .changeset/api-update-${{ github.run_number }}-${{ github.run_attempt }}.md
+          ---
+          "@artandrey/api-client": minor
+          ---
+
+          Api client updated
+          EOF
       - name: Create Release PR or Publish
         id: changesets
         uses: changesets/action@v1
