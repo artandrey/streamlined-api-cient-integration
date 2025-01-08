@@ -12,17 +12,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Download Latest API Client Release
-        uses: ./.github/actions/download-release
+      - name: Download API Client Package
+        uses: ./.github/actions/download-npm-package-build
         with:
-          pattern: '@artandrey/api-client-*.tgz'
-          download-path: './downloads'
-          extract-path: './extracted'
-          token: ${{ secrets.GITHUB_TOKEN }}
+          package-name: '@artandrey/api-client'
+          output-dir: './extracted'
+          registry-url: 'https://npm.pkg.github.com'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Debug - List Downloaded Files
         run: |
-          echo "=== Contents of downloads directory ==="
-          ls -la ./downloads
           echo "=== Contents of extracted directory ==="
           ls -la ./extracted
           echo "=== Tree of extracted directory ==="
