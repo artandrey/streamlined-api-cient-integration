@@ -86,16 +86,13 @@ runs:
         
         # Create output directory and move package
         echo "Moving package to output directory..."
-        mkdir -p "${{ inputs.output-dir }}"
-        mv package/* "${{ inputs.output-dir }}/"
+        mkdir -p "${{ github.workspace }}/${{ inputs.output-dir }}"
+        mv package/* "${{ github.workspace }}/${{ inputs.output-dir }}/"
         
         # Clean up temp directory
-        cd ..
+        cd "${{ github.workspace }}"
         rm -rf "$TEMP_DIR"
         
-        echo "File structure:"
-        ls
-
         echo "Final package contents:"
         ls -la "${{ inputs.output-dir }}"
         
