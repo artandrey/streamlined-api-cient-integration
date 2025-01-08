@@ -37,19 +37,40 @@ runs:
         PACKAGE_URL="${{ inputs.registry-url }}/${{ inputs.package-name }}/${{ inputs.version }}"
         echo "Fetching package metadata from: $PACKAGE_URL"
         
-        # Add authentication header for GitHub registry
-        TARBALL_URL=$(curl -s -H "Authorization: Bearer ${{ inputs.token }}" "$PACKAGE_URL" | jq -r '.dist.tarball')
+        # Add authentication header for GitHub registry and save response for debugging
+        RESPONSE=$(curl -v -H "Accept: application/json" -H "Authorization: Bearer ${{ inputs.token }}" "$PACKAGE_URL")
+        echo "Response from registry:"
+        echo "$RESPONSE" | jq '.'
+        
+        # Extract tarball URL
+        TARBALL_URL=$(echo "$RESPONSE" | jq -r '.dist.tarball')
+        if [ "$TARBALL_URL" = "null" ] || [ -z "$TARBALL_URL" ]; then
+          echo "Error: Could not extract tarball URL from response"
+          exit 1
+        fi
         echo "Downloading from: $TARBALL_URL"
         
         # Download and extract the tarball (with auth header)
-        curl -L -H "Authorization: Bearer ${{ inputs.token }}" "$TARBALL_URL" -o "$TEMP_DIR/package.tgz"
+        curl -v -L -H "Authorization: Bearer ${{ inputs.token }}" "$TARBALL_URL" -o "$TEMP_DIR/package.tgz"
+        
+        # Verify download
+        if [ ! -f "$TEMP_DIR/package.tgz" ]; then
+          echo "Error: Failed to download package tarball"
+          exit 1
+        fi
+        
         cd "$TEMP_DIR"
-        tar -xzf package.tgz
+        echo "Extracting package..."
+        tar -xzvf package.tgz
+        
+        echo "Extracted contents:"
+        ls -la
         
         # Move contents from package directory to output
+        echo "Moving contents to output directory..."
         mv package/* "${{ inputs.output-dir }}/"
         
-        echo "Package contents:"
+        echo "Final package contents:"
         ls -la "${{ inputs.output-dir }}"
         
         # Set output version for reference
