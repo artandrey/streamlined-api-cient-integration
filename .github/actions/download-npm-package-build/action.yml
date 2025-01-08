@@ -1,0 +1,64 @@
+name: 'Download NPM Package Build'
+description: 'Downloads NPM package build files directly from the registry'
+
+inputs:
+  package-name:
+    description: 'Name of the package to download'
+    required: true
+  version:
+    description: 'Version of the package. If not specified, latest version will be used'
+    required: false
+  output-dir:
+    description: 'Directory where the package files should be extracted'
+    required: true
+  registry-url:
+    description: 'Base URL of the npm registry'
+    required: false
+    default: 'https://registry.npmjs.org'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Create directories
+      shell: bash
+      run: |
+        mkdir -p "${{ inputs.output-dir }}"
+        TEMP_DIR=$(mktemp -d)
+        echo "TEMP_DIR=$TEMP_DIR" >> $GITHUB_ENV
+
+    - name: Download package
+      shell: bash
+      run: |
+        # Get package metadata
+        PACKAGE_URL="${{ inputs.registry-url }}/${{ inputs.package-name }}"
+        echo "Fetching package metadata from: $PACKAGE_URL"
+        
+        # If version is not specified, get the latest version from dist-tags
+        if [ -z "${{ inputs.version }}" ]; then
+          VERSION=$(curl -s "$PACKAGE_URL" | jq -r '."dist-tags".latest')
+          echo "Using latest version: $VERSION"
+        else
+          VERSION="${{ inputs.version }}"
+          echo "Using specified version: $VERSION"
+        fi
+        
+        # Get version-specific metadata and extract tarball URL
+        VERSION_URL="$PACKAGE_URL/$VERSION"
+        echo "Fetching version metadata from: $VERSION_URL"
+        
+        TARBALL_URL=$(curl -s "$VERSION_URL" | jq -r '.dist.tarball')
+        echo "Downloading from: $TARBALL_URL"
+        
+        # Download and extract the tarball
+        curl -L "$TARBALL_URL" -o "$TEMP_DIR/package.tgz"
+        cd "$TEMP_DIR"
+        tar -xzf package.tgz
+        
+        # Move contents from package directory to output
+        mv package/* "${{ inputs.output-dir }}/"
+        
+        echo "Package contents:"
+        ls -la "${{ inputs.output-dir }}"
+        
+        # Set output version for reference
+        echo "version=$VERSION" >> $GITHUB_OUTPUT 
