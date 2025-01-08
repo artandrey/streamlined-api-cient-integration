@@ -35,16 +35,19 @@ runs:
       shell: bash
       run: |
         cd "${{ inputs.download-path }}"
-        # Get latest release info and download matching assets
-        LATEST_RELEASE=$(gh api repos/${{ inputs.repository }}/releases/latest)
-        DOWNLOAD_URL=$(echo "$LATEST_RELEASE" | jq -r '.assets[] | select(.name | test("${{ inputs.pattern }}")) | .browser_download_url')
         
-        if [ -z "$DOWNLOAD_URL" ]; then
-          echo "No matching assets found in the latest release"
-          exit 1
-        fi
+        echo "Current directory: $(pwd)"
+        echo "Repository: ${{ inputs.repository }}"
+        echo "Pattern to match: ${{ inputs.pattern }}"
         
-        gh release download --repo ${{ inputs.repository }} --pattern "${{ inputs.pattern }}" latest
+        echo "=== Listing available releases ==="
+        gh release list --repo ${{ inputs.repository }}
+        
+        echo "=== Attempting to download release ==="
+        gh release download latest --repo ${{ inputs.repository }} --pattern "${{ inputs.pattern }}" --dir .
+        
+        echo "=== Downloaded files ==="
+        ls -la
       env:
         GH_TOKEN: ${{ inputs.token }}
 
@@ -52,7 +55,15 @@ runs:
       shell: bash
       run: |
         cd "${{ inputs.download-path }}"
+        echo "=== Extracting files ==="
         for f in *.tgz; do
-          [ -f "$f" ] || continue  # Skip if no files match
-          tar -xzf "$f" -C "${{ inputs.extract-path }}"
+          if [ -f "$f" ]; then
+            echo "Extracting $f to ${{ inputs.extract-path }}"
+            tar -xzf "$f" -C "${{ inputs.extract-path }}"
+          else
+            echo "No .tgz files found to extract"
+          fi
         done
+        
+        echo "=== Extracted contents ==="
+        ls -la "${{ inputs.extract-path }}"
