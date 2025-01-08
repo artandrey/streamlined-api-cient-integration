@@ -1,3 +1,5 @@
+# appeared that this action is not currently required
+# but it is working, so I will leave it here :)
 name: 'Download Release Artifact'
 description: 'Downloads artifact from the latest GitHub release'
 
