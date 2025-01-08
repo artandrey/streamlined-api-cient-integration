@@ -18,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/artandrey/streamlined-api-client-generation.git"
+    "url": "git+https://github.com/artandrey/streamlined-api-client-integration.git"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.61.0",
