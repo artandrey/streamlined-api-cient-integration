@@ -33,24 +33,43 @@ runs:
     - name: Download package
       shell: bash
       run: |
-        # Get version-specific metadata and extract tarball URL
-        PACKAGE_URL="${{ inputs.registry-url }}/${{ inputs.package-name }}/${{ inputs.version }}"
+        # Setup .npmrc for authentication
+        echo "//npm.pkg.github.com/:_authToken=${{ inputs.token }}" > "$TEMP_DIR/.npmrc"
+        echo "@artandrey:registry=https://npm.pkg.github.com" >> "$TEMP_DIR/.npmrc"
+        
+        # Get package metadata
+        SCOPE=$(echo "${{ inputs.package-name }}" | cut -d'/' -f1)
+        NAME=$(echo "${{ inputs.package-name }}" | cut -d'/' -f2)
+        PACKAGE_URL="${{ inputs.registry-url }}${SCOPE}/${NAME}"
         echo "Fetching package metadata from: $PACKAGE_URL"
         
-        # Add authentication header for GitHub registry and save response for debugging
-        RESPONSE=$(curl -v -H "Accept: application/json" -H "Authorization: Bearer ${{ inputs.token }}" "$PACKAGE_URL")
+        # Get package metadata with npm registry headers
+        RESPONSE=$(curl -v \
+          -H "Accept: application/vnd.npm.install-v1+json" \
+          -H "Authorization: Bearer ${{ inputs.token }}" \
+          "$PACKAGE_URL")
         echo "Response from registry:"
         echo "$RESPONSE" | jq '.'
         
-        # Extract tarball URL
-        TARBALL_URL=$(echo "$RESPONSE" | jq -r '.dist.tarball')
+        # Get the version-specific data
+        if [ "${{ inputs.version }}" = "latest" ]; then
+          VERSION=$(echo "$RESPONSE" | jq -r '."dist-tags".latest')
+          echo "Using latest version: $VERSION"
+        else
+          VERSION="${{ inputs.version }}"
+        fi
+        
+        # Extract tarball URL from version data
+        TARBALL_URL=$(echo "$RESPONSE" | jq -r ".versions[\"$VERSION\"].dist.tarball")
         if [ "$TARBALL_URL" = "null" ] || [ -z "$TARBALL_URL" ]; then
           echo "Error: Could not extract tarball URL from response"
+          echo "Available versions:"
+          echo "$RESPONSE" | jq '.versions | keys'
           exit 1
         fi
         echo "Downloading from: $TARBALL_URL"
         
-        # Download and extract the tarball (with auth header)
+        # Download and extract the tarball
         curl -v -L -H "Authorization: Bearer ${{ inputs.token }}" "$TARBALL_URL" -o "$TEMP_DIR/package.tgz"
         
         # Verify download
@@ -74,5 +93,4 @@ runs:
         ls -la "${{ inputs.output-dir }}"
         
         # Set output version for reference
-        VERSION="${{ inputs.version }}"
         echo "version=$VERSION" >> $GITHUB_OUTPUT 
