@@ -41,10 +41,11 @@ runs:
         echo "Pattern to match: ${{ inputs.pattern }}"
         
         echo "=== Listing available releases ==="
-        gh release list --repo ${{ inputs.repository }}
+        LATEST_TAG=$(gh release list --repo ${{ inputs.repository }} --limit 1 | cut -f1)
+        echo "Latest release tag: $LATEST_TAG"
         
         echo "=== Attempting to download release ==="
-        gh release download latest --repo ${{ inputs.repository }} --pattern "${{ inputs.pattern }}" --dir .
+        gh release download "$LATEST_TAG" --repo ${{ inputs.repository }} --archive=zip --dir .
         
         echo "=== Downloaded files ==="
         ls -la
