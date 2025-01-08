@@ -12,6 +12,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Download Latest API Client Release
+        uses: ./.github/actions/download-release
+        with:
+          pattern: '@artandrey/api-client-*.tgz'
+          download-path: './downloads'
+          extract-path: './extracted'
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Debug - List Downloaded Files
+        run: |
+          echo "=== Contents of downloads directory ==="
+          ls -la ./downloads
+          echo "=== Contents of extracted directory ==="
+          ls -la ./extracted
+          echo "=== Tree of extracted directory ==="
+          tree ./extracted
       - name: Build API Client
         uses: ./.github/actions/build-api-client
       - name: Create Changeset
