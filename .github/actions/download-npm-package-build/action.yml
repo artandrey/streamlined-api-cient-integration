@@ -43,25 +43,31 @@ runs:
         echo "Fetching package metadata from: $PACKAGE_URL"
         
         # Get package metadata with npm registry headers
-        RESPONSE=$(curl -s \
+        RESPONSE=$(curl -s -w "%{http_code}" \
           -H "Accept: application/vnd.npm.install-v1+json" \
           -H "Authorization: Bearer ${{ inputs.token }}" \
           "$PACKAGE_URL")
         
+        HTTP_STATUS=${RESPONSE: -3}
+        RESPONSE_BODY=${RESPONSE::-3}
+        
+        if [ "$HTTP_STATUS" = "404" ]; then
+          echo "Error: Package ${{ inputs.package-name }} not found in registry ${{ inputs.registry-url }}"
+          exit 1
+        fi
+        
         # Get the version-specific data
         if [ "${{ inputs.version }}" = "latest" ]; then
-          VERSION=$(echo "$RESPONSE" | jq -r '."dist-tags".latest')
+          VERSION=$(echo "$RESPONSE_BODY" | jq -r '."dist-tags".latest')
           echo "Using latest version: $VERSION"
         else
           VERSION="${{ inputs.version }}"
         fi
         
         # Extract tarball URL from version data
-        TARBALL_URL=$(echo "$RESPONSE" | jq -r ".versions[\"$VERSION\"].dist.tarball")
+        TARBALL_URL=$(echo "$RESPONSE_BODY" | jq -r ".versions[\"$VERSION\"].dist.tarball")
         if [ "$TARBALL_URL" = "null" ] || [ -z "$TARBALL_URL" ]; then
-          echo "Error: Could not extract tarball URL from response"
-          echo "Available versions:"
-          echo "$RESPONSE" | jq '.versions | keys'
+          echo "Error: Version $VERSION not found for package ${{ inputs.package-name }}"
           exit 1
         fi
         echo "Downloading from: $TARBALL_URL"
