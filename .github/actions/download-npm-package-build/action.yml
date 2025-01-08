@@ -6,8 +6,9 @@ inputs:
     description: 'Name of the package to download'
     required: true
   version:
-    description: 'Version of the package. If not specified, latest version will be used'
+    description: 'Version of the package'
     required: false
+    default: 'latest'
   output-dir:
     description: 'Directory where the package files should be extracted'
     required: true
@@ -29,24 +30,11 @@ runs:
     - name: Download package
       shell: bash
       run: |
-        # Get package metadata
-        PACKAGE_URL="${{ inputs.registry-url }}/${{ inputs.package-name }}"
+        # Get version-specific metadata and extract tarball URL
+        PACKAGE_URL="${{ inputs.registry-url }}/${{ inputs.package-name }}/${{ inputs.version }}"
         echo "Fetching package metadata from: $PACKAGE_URL"
         
-        # If version is not specified, get the latest version from dist-tags
-        if [ -z "${{ inputs.version }}" ]; then
-          VERSION=$(curl -s "$PACKAGE_URL" | jq -r '."dist-tags".latest')
-          echo "Using latest version: $VERSION"
-        else
-          VERSION="${{ inputs.version }}"
-          echo "Using specified version: $VERSION"
-        fi
-        
-        # Get version-specific metadata and extract tarball URL
-        VERSION_URL="$PACKAGE_URL/$VERSION"
-        echo "Fetching version metadata from: $VERSION_URL"
-        
-        TARBALL_URL=$(curl -s "$VERSION_URL" | jq -r '.dist.tarball')
+        TARBALL_URL=$(curl -s "$PACKAGE_URL" | jq -r '.dist.tarball')
         echo "Downloading from: $TARBALL_URL"
         
         # Download and extract the tarball
@@ -61,4 +49,5 @@ runs:
         ls -la "${{ inputs.output-dir }}"
         
         # Set output version for reference
+        VERSION="${{ inputs.version }}"
         echo "version=$VERSION" >> $GITHUB_OUTPUT 
