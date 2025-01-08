@@ -23,10 +23,9 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Create directories
+    - name: Create temp directory
       shell: bash
       run: |
-        mkdir -p "${{ inputs.output-dir }}"
         TEMP_DIR=$(mktemp -d)
         echo "TEMP_DIR=$TEMP_DIR" >> $GITHUB_ENV
 
@@ -85,9 +84,13 @@ runs:
         echo "Extracted contents:"
         ls -la
         
-        # Move contents from package directory to output
-        echo "Moving contents to output directory..."
-        mv package/* "${{ inputs.output-dir }}/"
+        # Move the package directory to the target location
+        echo "Moving package to output directory..."
+        mv package "${{ inputs.output-dir }}"
+        
+        # Clean up temp directory
+        cd ..
+        rm -rf "$TEMP_DIR"
         
         echo "Final package contents:"
         ls -la "${{ inputs.output-dir }}"
