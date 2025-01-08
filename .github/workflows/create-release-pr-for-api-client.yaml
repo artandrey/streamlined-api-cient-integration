@@ -18,8 +18,7 @@ jobs:
           package-name: '@artandrey/api-client'
           output-dir: './extracted'
           registry-url: 'https://npm.pkg.github.com'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Debug - List Downloaded Files
         run: |
           echo "=== Contents of extracted directory ==="

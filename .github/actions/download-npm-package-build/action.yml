@@ -16,6 +16,9 @@ inputs:
     description: 'Base URL of the npm registry'
     required: false
     default: 'https://registry.npmjs.org'
+  token:
+    description: 'Authentication token for the registry'
+    required: true
 
 runs:
   using: "composite"
@@ -34,11 +37,12 @@ runs:
         PACKAGE_URL="${{ inputs.registry-url }}/${{ inputs.package-name }}/${{ inputs.version }}"
         echo "Fetching package metadata from: $PACKAGE_URL"
         
-        TARBALL_URL=$(curl -s "$PACKAGE_URL" | jq -r '.dist.tarball')
+        # Add authentication header for GitHub registry
+        TARBALL_URL=$(curl -s -H "Authorization: Bearer ${{ inputs.token }}" "$PACKAGE_URL" | jq -r '.dist.tarball')
         echo "Downloading from: $TARBALL_URL"
         
-        # Download and extract the tarball
-        curl -L "$TARBALL_URL" -o "$TEMP_DIR/package.tgz"
+        # Download and extract the tarball (with auth header)
+        curl -L -H "Authorization: Bearer ${{ inputs.token }}" "$TARBALL_URL" -o "$TEMP_DIR/package.tgz"
         cd "$TEMP_DIR"
         tar -xzf package.tgz
         
